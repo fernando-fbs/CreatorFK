@@ -20,19 +20,19 @@ function infoTable(sql: string) {
 	const relations: Relation[] = [];
 	//inicia a variavel 
 
-	const tablesLength = sql.match(/`Niruu_App`.`(.*)`/g)?.length;	
+	const tablesLength = sql.match(/`APP`.`(.*)`/g)?.length;	
 	// procura pelos nomes das tabelas usando regex, pega a quantidade de nomes das tabelas  encotradas 
 	//padrão de tabela sendo procurada
 	// Create Table
-	// If Not Exists `Niruu_App`.`Magazine` 
+	// If Not Exists `APP`.`Magazine` 
 
-	const tablesNames = sql.trim().match(/`Niruu_App`.`(.*)`/g);
+	const tablesNames = sql.trim().match(/`APP`.`(.*)`/g);
 	// pega os nomes das tabelas
 
 	if (tablesLength && tablesNames) {
 		for (let index = 0; index < tablesLength; index++) {
 		//loop na quantitade de nomes de tabelas
-			const tableName = tablesNames[index].replaceAll(/`Niruu_App`\.`/g, '').replaceAll('`', '').trim();
+			const tableName = tablesNames[index].replaceAll(/`APP`\.`/g, '').replaceAll('`', '').trim();
 			//pega o primeiro nome tabela, e remove templetes string e espaços desnecessarios 
 			console.log(tableName)
 			const tablesRegex = /Create Table([\s\S]*?)Utf8mb4;/g
@@ -149,7 +149,7 @@ infoTable(createModifiedSqlScript('v1.sql'))
 
 //tabela de referencia 
 // Create Table
-// 	If Not Exists `Niruu_App`.`User_Conquest` (
+// 	If Not Exists `APP`.`User_Conquest` (
 // 		`Id_User_Conquest` Int Not Null Auto_Increment,
 // 		`Id_Conquest` Tinyint Not Null,
 // 		`Id_User` Int Not Null,
@@ -162,7 +162,7 @@ infoTable(createModifiedSqlScript('v1.sql'))
 // 	= Utf8mb4;
 
 // Create Table
-// 	If Not Exists `Niruu_App`.`Magazine` (
+// 	If Not Exists `APP`.`Magazine` (
 // 		`Id_Magazine` Int Not Null Auto_Increment,
 // 		`Romaji_Name` Varchar(256) Not Null,
 // 		`Created_At` Timestamp Not Null Default Current_Timestamp(),
