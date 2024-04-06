@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import { join } from 'path';
+import * as fs from "fs";
+import { join } from "path";
 interface Relation {
 	currentTable: string;
 	//tabela atual
@@ -9,147 +9,155 @@ interface Relation {
 	//relação da chave fk
 }
 
+const NoFK = ["index", "visible", "primary", "unique", "key"];
+
 function createModifiedSqlScript(inputFile: string): string {
-	const sqlScript: string = fs.readFileSync(inputFile, 'utf-8');
-	//ler o arquivo .sql 
-	return sqlScript
-	
+	const sqlScript: string = fs.readFileSync(inputFile, "utf-8");
+	//ler o arquivo .sql
+	return sqlScript;
 }
 
 function infoTable(sql: string) {
 	const relations: Relation[] = [];
-	//inicia a variavel 
+	//inicia a variavel
 
-	const tablesLength = sql.match(/`APP`.`(.*)`/g)?.length;	
-	// procura pelos nomes das tabelas usando regex, pega a quantidade de nomes das tabelas  encotradas 
+	const tablesLength = sql.match(/`(.*)`.`(.*)`/g)?.length;
+	// procura pelos nomes das tabelas usando regex, pega a quantidade de nomes das tabelas  encotradas
 	//padrão de tabela sendo procurada
 	// Create Table
-	// If Not Exists `APP`.`Magazine` 
+	// If Not Exists `Niruu_App`.`Magazine`
 
-	const tablesNames = sql.trim().match(/`APP`.`(.*)`/g);
+	const tablesNames = sql.trim().match(/`Niruu_App`.`(.*)`/g);
 	// pega os nomes das tabelas
 
 	if (tablesLength && tablesNames) {
 		for (let index = 0; index < tablesLength; index++) {
-		//loop na quantitade de nomes de tabelas
-			const tableName = tablesNames[index].replaceAll(/`APP`\.`/g, '').replaceAll('`', '').trim();
-			//pega o primeiro nome tabela, e remove templetes string e espaços desnecessarios 
-			console.log(tableName)
-			const tablesRegex = /Create Table([\s\S]*?)Utf8mb4;/g
-			//regex pega todas as tabelas com esse padrão 
-			
-			
-			const columnsRegex = /,([\s\S]* ?),/g
+			//loop na quantitade de nomes de tabelas
+			const tableName = tablesNames[index]
+				.replaceAll(/`Niruu_App`\.`/g, "")
+				.replaceAll("`", "")
+				.trim();
+			//pega o primeiro nome tabela, e remove templetes string e espaços desnecessarios
+			//console.log(tableName);
+			const tablesRegex = /CREATE TABLE([\s\S]*?)IF NOT EXISTS([\s\S]*?)PRIMARY KEY/g;
+			//regex pega todas as tabelas com esse padrão
+
+			const columnsRegex = /`(.*)`([\s\S]* ?),/g;
+
 			//regex para pega as informações dentro das colunas estiver as entre virgula, assim não seleciona a chave pk
-			
+
 			let tables = sql.trim().match(tablesRegex)?.[index];
-			//seta todas as tabelas na variavel 
+			//console.log('table: ',`\n \n`, tables, `\n \n`);
+			//seta todas as tabelas na variavel
 			//console.log('tablesRegex',tables)
 
-			const columnsLegth = tables?.match(columnsRegex)?.length
-			// seta as quantidade de colunas naa tabela
-			const columns = tables?.match(columnsRegex)
-			//seta todas as colunas achadas  
+			const columnsLegth = tables?.match(columnsRegex)?.length;
+			//console.log('columnsLegth: ',`\n \n`, columnsLegth, `\n \n`);
 
-			console.log(columns)
+			// seta as quantidade de colunas naa tabela
+			const columns = tables?.match(columnsRegex);
+			//seta todas as colunas achadas
+
+			//console.log(columns);
 			if (columnsLegth && columns) {
 				//loop da tabela, lendo todas as colunas
-				
+
 				for (let index = 0; index < columnsLegth; index++) {
 					//loop nas colunas da tabela
-					let column = columns[index].replaceAll('`', '').trim();
+					let column = columns[index].replaceAll("`", "").trim();
 					//formata a coluna, remove templetes string
-					
-					console.log("coluna formatada", column)
 
+					//console.log("coluna formatada", column);
 
-					let lines = column.split(',')
+					let lines = column.split(",");
 					//divide as colunas em linha separando por virgula
-					console.log(lines)
+					//console.log('lines:',`\n`, lines,`\n`);
 
+					let lineCount = 0;
 					for (const line of lines) {
-					//loop dentro da linha 
-						let lineFormat = line.trim().split(' ');
+						//loop dentro da linha
+						let lineFormat = line.trim().split(" ");
+
 						//formata a linha e a divide
-						console.log('linha:', lineFormat)
+						console.log("linha:", lineFormat);
 
-						let isId = lineFormat[0].startsWith('Id_') ? lineFormat[0] : undefined;
-						//procura se a primeira palavra da string começa com "id_", 
-						//se verdadeiro retorna a linha formatada em string, se não retorna undefined
-						console.log('isId:', isId)
-						if (isId) {
-							//se true cria a relação
-							let relateTo = isId?.slice(3).trim()
-							//remove 'Id_'
-
-							console.log('relateTo:', relateTo)
-							
-							//adiciona as relações na tabela 
-							relations.push(
-								{
-									foreignKey: [isId],
-									relateTo: [relateTo],
-									currentTable: tableName
-								}
-							)
+						for (const line of lineFormat) {
+							lineCount += 1;
+							console.log("for const line: ", `\n \n`, line);
 						}
 
-					}
+						let isId: string | undefined;
+						console.log("for lineFormat:", `\n \n`, lineFormat);
+						if (lineFormat[0].startsWith("Id_")) {
+							isId = lineFormat[0];
+						} else {
+							isId = undefined;
+						}
+						//procura se a primeira palavra da string começa com "id_",
+						//se verdadeiro retorna a linha formatada em string, se não retorna undefined
+						console.log("isId:", `\n\n`, isId);
+						if (isId) {
+							//se true cria a relação
+							let relateTo = isId?.slice(3).trim();
+							//remove 'Id_'
 
+							//console.log("relateTo:", relateTo);
+
+							//adiciona as relações na tabela
+							relations.push({
+								foreignKey: [isId],
+								relateTo: [relateTo],
+								currentTable: tableName,
+							});
+						}
+					}
 
 					//console.log("relations:", relations)
 				}
 			}
 			//console.log("for columnsLegth:", columnsLegth)
-
 		}
 	}
-	return generateFK(relations, sql)
-};
-
+	return generateFK(relations, sql);
+}
 
 function generateFK(relations: Relation[], sql: string) {
 	//sql: database anterior
 
-	let querySQL = '';
+	let querySQL = "";
 
 	//cria o script sql
 	for (const relation of relations) {
-		console.log("relation generateFK:", relation)
+		console.log("relation generateFK:", relation);
 		if (relation.foreignKey) {
-			querySQL +=
-				`ALTER TABLE \`${relation.currentTable}\` ADD CONSTRAINT \`Fk_${relation.currentTable}_${relation.relateTo}\` FOREIGN KEY  (\`${relation.foreignKey}\`) REFERENCES  \`${relation.relateTo}\` (\`${relation.foreignKey}\`); \n\n`;
+			console.log("relation:", relation);
+			querySQL += `ALTER TABLE \`${relation.currentTable}\` ADD CONSTRAINT \`Fk_${relation.currentTable}_${relation.relateTo}\` FOREIGN KEY (\`${relation.foreignKey}\`) REFERENCES \`${relation.relateTo}\` (\`${relation.foreignKey}\`) ON DELETE CASCADE;\n\n`;
 			//console.log(querySQL)
 
 			//se tiver mais de uma fk, gerar entra no loop para criar as outras
 			if (relation.foreignKey.length > 1) {
 				for (const foreignKey of relation.foreignKey) {
-					querySQL += `ALTER TABLE \`${relation.currentTable}\` ADD CONSTRAINT \`Fk_${relation.currentTable}_${relation.relateTo}\`	FOREIGN KEY (\`${relation.foreignKey}\`) REFERENCES \`${relation.relateTo}\` (\`${relation.foreignKey}\`); \n\n`;
+					querySQL += `ALTER TABLE \`${relation.currentTable}\` ADD CONSTRAINT \`Fk_${relation.currentTable}_${relation.relateTo}\` FOREIGN KEY (\`${relation.foreignKey}\`) REFERENCES \`${relation.relateTo}\` (\`${relation.foreignKey}\`) ON DELETE CASCADE; \n\n`;
 					//console.log(querySQL)
-
 				}
 			}
 		}
 	}
-	const querysSQL = join(querySQL + '\n' + sql)
-	//junta o .sql com o novo sql criado 
+	const querysSQL = join(sql + "\n" + querySQL);
+	//junta o .sql com o novo sql criado
 
-	console.log(querySQL)
-	fs.writeFileSync('database_with_fks.sql', querysSQL);
-	//escreve o novo sql no diretorio 
+	console.log(querySQL);
+	fs.writeFileSync("database_with_fks.sql", querysSQL);
+	//escreve o novo sql no diretorio
 }
 
-
-infoTable(createModifiedSqlScript('v1.sql'))
+infoTable(createModifiedSqlScript("MainSQL.sql"));
 //createModifiedSqlScript ler o arquivo e retorna a strig, passando para o infotable
 //passa o nome do arquivo que ira criar as chaves FKs
 
-
-
-
-//tabela de referencia 
+//tabela de referencia
 // Create Table
-// 	If Not Exists `APP`.`User_Conquest` (
+// 	If Not Exists `Niruu_App`.`User_Conquest` (
 // 		`Id_User_Conquest` Int Not Null Auto_Increment,
 // 		`Id_Conquest` Tinyint Not Null,
 // 		`Id_User` Int Not Null,
@@ -162,7 +170,7 @@ infoTable(createModifiedSqlScript('v1.sql'))
 // 	= Utf8mb4;
 
 // Create Table
-// 	If Not Exists `APP`.`Magazine` (
+// 	If Not Exists `Niruu_App`.`Magazine` (
 // 		`Id_Magazine` Int Not Null Auto_Increment,
 // 		`Romaji_Name` Varchar(256) Not Null,
 // 		`Created_At` Timestamp Not Null Default Current_Timestamp(),
@@ -174,10 +182,10 @@ infoTable(createModifiedSqlScript('v1.sql'))
 // Set
 // 	= Utf8mb4;
 
-
 //alter table de referencia
 // ALTER TABLE `User_Conquest` ADD CONSTRAINT `Fk_User_Conquest_Conquest` FOREIGN KEY (`Id_Conquest`) REFERENCES `Conquest` (`Id_Conquest`);
 
 // ALTER TABLE `User_Conquest` ADD CONSTRAINT `Fk_User_Conquest_User` FOREIGN KEY (`Id_User`) REFERENCES `User` (`Id_User`);
 
 // ALTER TABLE `Magazine_Volume` ADD CONSTRAINT `Fk_Magazine_Volume_Magazine` FOREIGN KEY (`Id_Magazine`) REFERENCES `Magazine` (`Id_Magazine`);
+// formatting extension: Prettier SQL VSCode

@@ -1,0 +1,13 @@
+{
+	"editor.fontFamily": "Ubuntu regular, monospace, Consolas, 'Courier New'",
+	"editor.fontLigatures": true,
+	"editor.autoIndent": "advanced",
+	"editor.guides.highlightActiveBracketPair": true,
+	"editor.autoSurround": "languageDefined",
+	"editor.detectIndentation": true,
+	"editor.tabSize": 4,
+	"prisma.trace.server": "verbose",
+	"editor.fontSize": 13,
+
+
+}
